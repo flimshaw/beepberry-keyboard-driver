@@ -205,19 +205,16 @@ static void report_key_input_event(struct kbd_ctx* ctx,
 			"%s Could not get Keycode for Scancode: [0x%02X]\n",
 			__func__, ev->scancode);
 		return;
-
-	// Compose key sends enter if touchpad always sends arrow keys
+        // Compose key sends enter if touchpad always sends arrow keys
 	} else if (ctx->touchpad_always_keys && (keycode == KEY_COMPOSE)) {
 		keycode = KEY_ENTER;
 		// Continue to normal input handling
-
 	// Compose key enters meta mode if touchpad not in arrow key mode
 	} else if (!ctx->meta_enabled && (keycode == KEY_COMPOSE)) {
 		if (ev->state == KEY_STATE_RELEASED) {
 			input_meta_enable(ctx);
 		}
 		return;
-
 	// Berry key sends Tmux prefix (Control + code 171 in keymap)
 	} else if (keycode == KEY_PROPS) {
 		if (ev->state == KEY_STATE_PRESSED) {
@@ -441,13 +438,15 @@ int input_probe(struct i2c_client* i2c_client)
 	__clear_bit(KEY_RESERVED, g_ctx->input_dev->keybit);
 	__set_bit(EV_REP, g_ctx->input_dev->evbit);
 	__set_bit(EV_KEY, g_ctx->input_dev->evbit);
+	__set_bit(EV_REL, g_ctx->input_dev->evbit);
 
 	// Set input device capabilities
 	input_set_capability(g_ctx->input_dev, EV_MSC, MSC_SCAN);
 	#if (BBQ20KBD_TRACKPAD_USE == BBQ20KBD_TRACKPAD_AS_MOUSE)
-		input_set_capability(g_ctx->input_dev, EV_REL, REL_X);
-		input_set_capability(g_ctx->input_dev, EV_REL, REL_Y);
 	#endif
+	// always set rel capability
+	input_set_capability(g_ctx->input_dev, EV_REL, REL_X);
+	input_set_capability(g_ctx->input_dev, EV_REL, REL_Y);
 
 	// Request IRQ handler for I2C client and initialize workqueue
 	if ((rc = devm_request_threaded_irq(&i2c_client->dev,
@@ -578,6 +577,11 @@ void input_workqueue_handler(struct work_struct *work_struct_ptr)
 
 		#if (BBQ20KBD_TRACKPAD_USE == BBQ20KBD_TRACKPAD_AS_KEYS)
 
+			// Report mouse movement
+		input_report_rel(ctx->input_dev, REL_X, ctx->touch_rel_x);
+		input_report_rel(ctx->input_dev, REL_Y, ctx->touch_rel_y);
+
+
 		// Touchpad-as-keys mode will always use the touchpad as arrow keys
 		if (ctx->touchpad_always_keys) {
 
@@ -608,13 +612,13 @@ void input_workqueue_handler(struct work_struct *work_struct_ptr)
 
 			// Negative Y: up arrow key
 			if (ctx->touch_rel_y < -4) {
-				input_report_key(ctx->input_dev, KEY_UP, TRUE);
-				input_report_key(ctx->input_dev, KEY_UP, FALSE);
+				//input_report_key(ctx->input_dev, KEY_UP, TRUE);
+				//input_report_key(ctx->input_dev, KEY_UP, FALSE);
 
 			// Positive Y: down arrow key
 			} else if (ctx->touch_rel_y > 4) {
-				input_report_key(ctx->input_dev, KEY_DOWN, TRUE);
-				input_report_key(ctx->input_dev, KEY_DOWN, FALSE);
+				//input_report_key(ctx->input_dev, KEY_DOWN, TRUE);
+				//input_report_key(ctx->input_dev, KEY_DOWN, FALSE);
 			}
 		}
 
