@@ -207,7 +207,8 @@ static void report_key_input_event(struct kbd_ctx* ctx,
 		return;
         // Compose key sends enter if touchpad always sends arrow keys
 	} else if (ctx->touchpad_always_keys && (keycode == KEY_COMPOSE)) {
-		keycode = KEY_ENTER;
+		input_report_key(ctx->input_dev, BTN_LEFT, ev->state == KEY_STATE_PRESSED);
+		input_sync(ctx->input_dev);
 		// Continue to normal input handling
 	// Compose key enters meta mode if touchpad not in arrow key mode
 	} else if (!ctx->meta_enabled && (keycode == KEY_COMPOSE)) {
@@ -253,7 +254,14 @@ static void report_key_input_event(struct kbd_ctx* ctx,
 
 		// Handle function dispatch meta mode keys
 		if (input_meta_is_single_function_key(ctx, keycode)) {
-			if (ev->state == KEY_STATE_RELEASED) {
+			input_report_key(ctx->input_dev, BTN_LEFT, ev->state == KEY_STATE_PRESSED);
+			if (keycode == KEY_COMPOSE) {
+				if(ctx->meta_touch_keys_mode) {
+					input_report_key(ctx->input_dev, BTN_LEFT, ev->state == KEY_STATE_PRESSED);
+				} else {
+					input_meta_enable_touch_keys_mode(ctx);
+				}
+			} else if (ev->state == KEY_STATE_RELEASED) {
 		 		input_meta_run_single_function_key(ctx, keycode);
 			}
 			return;
@@ -439,6 +447,7 @@ int input_probe(struct i2c_client* i2c_client)
 	__set_bit(EV_REP, g_ctx->input_dev->evbit);
 	__set_bit(EV_KEY, g_ctx->input_dev->evbit);
 	__set_bit(EV_REL, g_ctx->input_dev->evbit);
+	__set_bit(BTN_LEFT, g_ctx->input_dev->keybit);
 
 	// Set input device capabilities
 	input_set_capability(g_ctx->input_dev, EV_MSC, MSC_SCAN);
