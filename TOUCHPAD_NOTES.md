@@ -15,4 +15,4 @@ KERNEL=="event0", ENV{ID_INPUT_KEYBOARD}="1", ENV{ID_INPUT_MOUSE}="1"
 
 ## How to use
 
-Reboot, and start xwindows. If you click the meta/mouse button twice, you will be able to control the cursor. Additional clicks will register as left mouse clicks. Hitting escape/the button to the right of the meta key will exit back out.
+After you do all the steps above, reboot! Then start xwindows with startx. If you click the meta/mouse button twice, you will be able to control the cursor. Additional clicks will register as left mouse clicks. Hitting escape/the button to the right of the meta key will exit back out.
